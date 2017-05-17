@@ -1,0 +1,6 @@
+include *.rst LICENSE NOTICE
+recursive-include toastedmarshmallow *
+recursive-exclude docs *.pyc
+recursive-exclude docs *.pyo
+recursive-exclude tests *.pyc
+recursive-exclude tests *.pyo

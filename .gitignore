@@ -1,0 +1,69 @@
+*.py[cod]
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+htmlcov
+.tox
+nosetests.xml
+.cache
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+
+# IDE
+.project
+.pydevproject
+.idea
+
+# Coverage
+cover
+.coveragerc
+
+# Sphinx
+docs/_build
+README.html
+
+*.ipynb
+.ipynb_checkpoints
+
+Vagrantfile
+.vagrant
+
+*.db
+*.ai
+.konchrc
+_sandbox
+pylintrc
+
+# Virtualenvs
+env
+venv
+
+# Other
+.directory
+*.pprof
+.mypy_cache

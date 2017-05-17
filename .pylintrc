@@ -1,0 +1,7 @@
+[pylint]
+disable = missing-docstring,
+    import-error,
+    too-few-public-methods,
+    protected-access,
+    too-many-branches,
+    too-many-instance-attributes
