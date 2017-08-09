@@ -37,7 +37,7 @@ This will *also* install a slightly-forked ``marshmallow`` that includes some
 hooks Toastedmarshmallow needs enable the JIT to run before falling back
 to the original marshmallow code.  These changes are minimal making it easier
 to track upstream.  You can find the changes
-`Here <https://github.com/marshmallow-code/marshmallow/pull/629>`_.
+`Here <https://github.com/marshmallow-code/marshmallow/pull/629/files>`_.
 
 This means you should **remove** ``marshmallow`` from your requirements and
 replace it with ``toastedmarshmallow``.  By default there is no
@@ -68,6 +68,19 @@ set the ``jit`` property on any ``Schema`` instance to
     # Specify the jit method as toastedmarshmallow's jit
     schema.jit = toastedmarshmallow.Jit
     # And that's it!  Your dump methods are 15x faster!
+
+It's also possible to use the ``Meta`` class on the ``Marshmallow`` schema
+to specify all instances of a given ``Schema`` should be optimized:
+
+.. code-block:: python
+
+    import toastedmarshmallow
+    from marshmallow import Schema, fields, pprint
+
+    class ArtistSchema(Schema):
+        class Meta:
+            jit = toastedMarshmallow.Jit
+        name = fields.Str()
 
 You can also enable Toasted Marshmallow globally by setting the environment
 variable ``MARSHMALLOW_SCHEMA_DEFAULT_JIT`` to ``toastedmarshmallow.Jit`` .
