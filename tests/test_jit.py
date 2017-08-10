@@ -111,14 +111,14 @@ def test_attr_str():
     assert 'getattr(obj, "def")' == attr_str('def')
 
 
-def test_instance_serialzier():
+def test_instance_serializer():
     serializer = InstanceSerializer()
     field = fields.Integer()
     assert 'result["foo"] = obj.foo' == str(serializer.serialize(
         'foo', 'bar', 'result["foo"] = {0}', field))
 
 
-def test_dict_serialzier_with_default():
+def test_dict_serializer_with_default():
     serializer = DictSerializer()
     field = fields.Integer(default=3)
     result = str(serializer.serialize('foo', 'bar', 'result["foo"] = {0}',
@@ -126,7 +126,7 @@ def test_dict_serialzier_with_default():
     assert 'result["foo"] = obj.get("foo", bar__default)' == result
 
 
-def test_dict_serialzier_with_callable_default():
+def test_dict_serializer_with_callable_default():
     serializer = DictSerializer()
     field = fields.Integer(default=int)
     result = str(serializer.serialize('foo', 'bar', 'result["foo"] = {0}',
@@ -134,7 +134,7 @@ def test_dict_serialzier_with_callable_default():
     assert 'result["foo"] = obj.get("foo", bar__default())' == result
 
 
-def test_dict_serialzier_no_default():
+def test_dict_serializer_no_default():
     serializer = DictSerializer()
     field = fields.Integer()
     result = str(serializer.serialize('foo', 'bar', 'result["foo"] = {0}',
@@ -261,7 +261,7 @@ def test_jitted_marshal_method(schema, use_cython):
     assert marshal_method.proxy._call == marshal_method.proxy.dict_serializer
 
 
-def test_jitted_marshal_method_bails_on_specialzie(simple_schema,
+def test_jitted_marshal_method_bails_on_specialize(simple_schema,
                                                    simple_object,
                                                    simple_dict,
                                                    simple_hybrid):

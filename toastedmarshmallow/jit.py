@@ -36,7 +36,7 @@ def field_symbol_name(field_name):
     """Generates the symbol name to be used when accessing a field in generated
     code.
 
-    If the field name isn't a valid identifier name, syntesizes a name by
+    If the field name isn't a valid identifier name, synthesizes a name by
     base64 encoding the fieldname.
     """
     if not _VALID_IDENTIFIER.match(field_name):
@@ -103,7 +103,7 @@ class DictSerializer(FieldSerializer):
 class HybridSerializer(FieldSerializer):
     """Generates code for accessing fields as if they were a hybrid object.
 
-    Hybrid objects are objets that don't inherit from `Mapping`, but do
+    Hybrid objects are objects that don't inherit from `Mapping`, but do
     implement `__getitem__`.  This means we first have to attempt a lookup by
     key, then fall back to looking up by instance variable.
     """
