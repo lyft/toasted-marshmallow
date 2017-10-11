@@ -1,3 +1,3 @@
 [submodule "marshmallow"]
 	path = marshmallow
-	url = git@github.com:rowillia/marshmallow.git
+	url = https://github.com/lyft/marshmallow.git
