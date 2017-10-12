@@ -1,12 +1,11 @@
 import base64
 import keyword
-import platform
 import re
 from abc import ABCMeta, abstractmethod
 from collections import Mapping
 
 import attr
-from six import exec_, iteritems, add_metaclass, text_type
+from six import exec_, iteritems, add_metaclass, text_type, string_types
 from marshmallow import missing, Schema, fields
 from marshmallow.base import SchemaABC
 
@@ -15,14 +14,6 @@ from .utils import IndentedString
 
 
 CYTHON_AVAILABLE = False
-# If running under PyPy Cython will always be slower so just disable the Cython
-# JIT.
-if platform.python_implementation() == 'CPython':
-    try:
-        import cython
-        CYTHON_AVAILABLE = True
-    except ImportError:
-        cython = None
 
 
 # Regular Expression for identifying a valid Python identifier name.
@@ -217,7 +208,13 @@ class StringInliner(FieldInliner):
         if is_overridden(field._serialize, fields.String._serialize):
             return None
         result = text_type.__name__ + '({0})'
-        return result + ' if {0} is not None else None'
+        result += ' if {0} is not None else None'
+        if not context.is_serializing:
+            string_type_strings = ','.join([x.__name__ for x in string_types])
+            result = ('(' + result + ') if '
+                      '(isinstance({0}, (' + string_type_strings +
+                      ')) or {0} is None) else dict()["error"]')
+        return result
 
 
 class BooleanInliner(FieldInliner):
@@ -242,7 +239,7 @@ class BooleanInliner(FieldInliner):
         context.namespace[falsy_symbol] = field.falsy
         result = ('(({0} in ' + truthy_symbol +
                   ') or (False if {0} in ' + falsy_symbol +
-                  ' else bool({0})))')
+                  ' else dict()["error"]))')
         return result + ' if {0} is not None else None'
 
 
@@ -259,9 +256,14 @@ class NumberInliner(FieldInliner):
                 is_overridden(field._serialize, fields.Number._serialize)):
             return None
         result = field.num_type.__name__ + '({0})'
-        if field.as_string:
+        if field.as_string and context.is_serializing:
             result = 'str({0})'.format(result)
-        return result + ' if {0} is not None else None'
+        if field.allow_none is True:
+            # Only emit the Null checking code if nulls are allowed.  If they
+            # aren't allowed casting `None` to an integer will throw and the
+            # slow path will take over.
+            result += ' if {0} is not None else None'
+        return result
 
 
 class NestedInliner(FieldInliner):  # pragma: no cover
@@ -368,6 +370,8 @@ def generate_transform_method_body(schema, on_field, context):
         else:
             # dict_class will be injected before `exec` is called.
             body += 'res = dict_class()'
+        if not context.is_serializing:
+            body += '__res_get = res.get'
         for field_name, field_obj in iteritems(schema.fields):
             if _should_skip_field(field_name, field_obj, context):
                 continue
@@ -409,6 +413,11 @@ def generate_transform_method_body(schema, on_field, context):
                 # fields like 'Method' expect to have `None` passed in when
                 # invoking their _serialize method.
                 body += assignment_template.format('None')
+                context.namespace['__marshmallow_missing'] = missing
+                body += 'if res["{key}"] is __marshmallow_missing:'.format(
+                    key=result_key)
+                with body.indent():
+                    body += 'del res["{key}"]'.format(key=result_key)
 
             else:
                 serializer = on_field
@@ -416,8 +425,10 @@ def generate_transform_method_body(schema, on_field, context):
                     # If attr_name is not a valid python identifier, it can only
                     # be accessed via key lookups.
                     serializer = DictSerializer(context)
+
                 body += serializer.serialize(
                     attr_name, field_symbol, assignment_template, field_obj)
+
                 if not context.is_serializing and field_obj.load_from:
                     # Marshmallow has a somewhat counter intuitive behavior.
                     # It will first load from the name of the field, then,
@@ -445,6 +456,25 @@ def generate_transform_method_body(schema, on_field, context):
                         body += serializer.serialize(
                             field_obj.load_from, field_symbol,
                             assignment_template, field_obj)
+            if not context.is_serializing:
+                if field_obj.required:
+                    body += 'if "{key}" not in res:'.format(key=result_key)
+                    with body.indent():
+                        body += 'raise ValueError()'
+                if field_obj.allow_none is not True:
+                    body += 'if __res_get("{key}", res) is None:'.format(
+                        key=result_key)
+                    with body.indent():
+                        body += 'raise ValueError()'
+                if (field_obj.validators or
+                        is_overridden(field_obj._validate,
+                                      fields.Field._validate)):
+                    body += 'if "{key}" in res:'.format(key=result_key)
+                    with body.indent():
+                        body += '{field_symbol}__validate(res["{result_key}"])'.format(
+                            field_symbol=field_symbol, result_key=result_key
+                        )
+
         body += 'return res'
     return body
 
@@ -612,6 +642,7 @@ def generate_marshall_method(schema, context=missing, threshold=100):
     if context is missing:
         context = JitContext()
 
+    context.namespace = {}
     context.namespace['dict_class'] = lambda: schema.dict_class()  # pylint: disable=unnecessary-lambda
 
     jit_options = getattr(schema.opts, 'jit_options', {})
@@ -632,17 +663,16 @@ def generate_marshall_method(schema, context=missing, threshold=100):
             # https://github.com/marshmallow-code/marshmallow/issues/450
             return None
         namespace[field_symbol_name(key) + '__serialize'] = value._serialize
-        namespace[field_symbol_name(key) + '__deserialize'] = value.deserialize
+        namespace[field_symbol_name(key) + '__deserialize'] = value._deserialize
         namespace[field_symbol_name(key) + '__validate_missing'] = value._validate_missing
+        namespace[field_symbol_name(key) + '__validate'] = value._validate
+
         if value.default is not missing:
             namespace[field_symbol_name(key) + '__default'] = value.default
         if value.missing is not missing:
             namespace[field_symbol_name(key) + '__missing'] = value.missing
 
-    if context.use_cython and CYTHON_AVAILABLE:
-        namespace = cython.inline(result, **namespace)
-    else:
-        exec_(result, namespace)
+    exec_(result, namespace)
 
     proxy = None  # type: Optional[SerializeProxy]
     marshall_method = None  # type: Union[SerializeProxy, Callable, None]
@@ -668,11 +698,11 @@ def generate_marshall_method(schema, context=missing, threshold=100):
     if proxy:
         # Used to allow tests to introspect the proxy.
         marshall.proxy = proxy  # type: ignore
+    marshall._source = result  # type: ignore
     return marshall
 
 
 def generate_unmarshall_method(schema, context=missing):
     context = context or JitContext()
-    context.use_inliners = False
     context.is_serializing = False
     return generate_marshall_method(schema, context)

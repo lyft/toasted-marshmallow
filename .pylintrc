@@ -5,4 +5,5 @@ disable = missing-docstring,
     protected-access,
     too-many-branches,
     too-many-instance-attributes,
-    too-many-locals
+    too-many-locals,
+    too-many-statements
