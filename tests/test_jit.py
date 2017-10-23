@@ -5,8 +5,8 @@ from six import text_type
 from toastedmarshmallow.jit import (
     attr_str, field_symbol_name, InstanceSerializer, DictSerializer,
     HybridSerializer,
-    generate_marshall_method_body, generate_marshall_method_bodies,
-    generate_marshall_method, JitContext)
+    generate_transform_method_body, generate_method_bodies,
+    generate_marshall_method, generate_unmarshall_method, JitContext)
 
 
 @pytest.fixture()
@@ -170,7 +170,7 @@ def InstanceSerializer(obj):
         'if "@#" in obj:\n'
         '        value = obj["@#"]; '
         'value = value() if callable(value) else value; '
-        'value = int(value) if value is not None else None; '
+        'value = int(value); '
         'res["foo"] = value')
     bar_assignment = (
         'value = obj.bar; '
@@ -181,14 +181,14 @@ def InstanceSerializer(obj):
         'value = obj.blargh; '
         'value = value() if callable(value) else value; '
         'value = ((value in __blargh_truthy) or '
-        '(False if value in __blargh_falsy else bool(value))) '
+        '(False if value in __blargh_falsy else dict()["error"])) '
         'if value is not None else None; '
         'res["blargh"] = value')
 
     context = JitContext()
-    result = str(generate_marshall_method_body(schema,
-                                               InstanceSerializer(),
-                                               context))
+    result = str(generate_transform_method_body(schema,
+                                                InstanceSerializer(),
+                                                context))
     assert result.startswith(expected_start)
     assert raz_assignment in result
     assert foo_assignment in result
@@ -202,18 +202,18 @@ def test_generate_marshall_method_bodies():
     class OneFieldSchema(Schema):
         foo = fields.Integer()
     context = JitContext()
-    result = generate_marshall_method_bodies(OneFieldSchema(), context)
+    result = generate_method_bodies(OneFieldSchema(), context)
     expected = '''\
 def InstanceSerializer(obj):
     res = {}
     value = obj.foo; value = value() if callable(value) else value; \
-value = int(value) if value is not None else None; res["foo"] = value
+value = int(value); res["foo"] = value
     return res
 def DictSerializer(obj):
     res = {}
     if "foo" in obj:
         value = obj["foo"]; value = value() if callable(value) else value; \
-value = int(value) if value is not None else None; res["foo"] = value
+value = int(value); res["foo"] = value
     return res
 def HybridSerializer(obj):
     res = {}
@@ -222,7 +222,82 @@ def HybridSerializer(obj):
     except (KeyError, AttributeError, IndexError, TypeError):
         value = obj.foo
     value = value; value = value() if callable(value) else value; \
-value = int(value) if value is not None else None; res["foo"] = value
+value = int(value); res["foo"] = value
+    return res'''
+    assert expected == result
+
+
+def test_generate_unmarshall_method_bodies():
+    class OneFieldSchema(Schema):
+        foo = fields.Integer()
+    context = JitContext(is_serializing=False, use_inliners=False)
+    result = generate_method_bodies(OneFieldSchema(), context)
+    expected = '''\
+def InstanceSerializer(obj):
+    res = {}
+    __res_get = res.get
+    res["foo"] = _field_foo__deserialize(obj.foo, "foo", obj)
+    if __res_get("foo", res) is None:
+        raise ValueError()
+    return res
+def DictSerializer(obj):
+    res = {}
+    __res_get = res.get
+    if "foo" in obj:
+        res["foo"] = _field_foo__deserialize(obj["foo"], "foo", obj)
+    if __res_get("foo", res) is None:
+        raise ValueError()
+    return res
+def HybridSerializer(obj):
+    res = {}
+    __res_get = res.get
+    try:
+        value = obj["foo"]
+    except (KeyError, AttributeError, IndexError, TypeError):
+        value = obj.foo
+    res["foo"] = _field_foo__deserialize(value, "foo", obj)
+    if __res_get("foo", res) is None:
+        raise ValueError()
+    return res'''
+    assert expected == result
+
+
+def test_generate_unmarshall_method_bodies_with_load_from():
+    class OneFieldSchema(Schema):
+        foo = fields.Integer(load_from='bar', allow_none=True)
+    context = JitContext(is_serializing=False, use_inliners=False)
+    result = str(generate_transform_method_body(OneFieldSchema(),
+                                                DictSerializer(context),
+                                                context))
+    expected = '''\
+def DictSerializer(obj):
+    res = {}
+    __res_get = res.get
+    if "foo" in obj:
+        res["foo"] = _field_foo__deserialize(obj["foo"], "bar", obj)
+    if "foo" not in res:
+        if "bar" in obj:
+            res["foo"] = _field_foo__deserialize(obj["bar"], "bar", obj)
+    return res'''
+    assert expected == result
+
+
+def test_generate_unmarshall_method_bodies_required():
+    class OneFieldSchema(Schema):
+        foo = fields.Integer(required=True)
+    context = JitContext(is_serializing=False, use_inliners=False)
+    result = str(generate_transform_method_body(OneFieldSchema(),
+                                                DictSerializer(context),
+                                                context))
+    expected = '''\
+def DictSerializer(obj):
+    res = {}
+    __res_get = res.get
+    res["foo"] = _field_foo__deserialize(obj["foo"], "foo", obj)
+    if "foo" not in res:
+        raise ValueError()
+    if __res_get("foo", res) is None:
+        raise ValueError()
     return res'''
     assert expected == result
 
@@ -231,6 +306,14 @@ def test_jit_bails_with_get_attribute():
     class DynamicSchema(Schema):
         def get_attribute(self, obj, attr, default):
             pass
+    marshal_method = generate_marshall_method(DynamicSchema())
+    assert marshal_method is None
+
+
+def test_jit_bails_nested_attribute():
+    class DynamicSchema(Schema):
+        foo = fields.String(attribute='foo.bar')
+
     marshal_method = generate_marshall_method(DynamicSchema())
     assert marshal_method is None
 
@@ -259,6 +342,25 @@ def test_jitted_marshal_method(schema, use_cython):
     })
     assert expected == result
     assert marshal_method.proxy._call == marshal_method.proxy.dict_serializer
+
+
+@pytest.mark.parametrize('use_cython', [True, False])
+def test_jitted_unmarshal_method(schema, use_cython):
+    context = JitContext(use_cython=use_cython)
+    unmarshal_method = generate_unmarshall_method(schema, context=context)
+    result = unmarshal_method({
+        'foo': 32,
+        'bar': 'Hello',
+        'meh': 'Foo'
+    })
+    expected = {
+        'bar': u'Hello',
+        '@#': 32,
+        'meh': 'Foo'
+    }
+    assert expected == result
+
+    assert not hasattr(unmarshal_method, 'proxy')
 
 
 def test_jitted_marshal_method_bails_on_specialize(simple_schema,

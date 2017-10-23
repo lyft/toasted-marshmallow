@@ -1,8 +1,12 @@
 from marshmallow import SchemaJit
 
-from .jit import generate_marshall_method, JitContext
+from .jit import (
+    generate_marshall_method,
+    generate_unmarshall_method,
+    JitContext
+)
 
-__version__ = '0.1.0'
+__version__ = '0.2.6'
 
 
 class Jit(SchemaJit):
@@ -11,7 +15,8 @@ class Jit(SchemaJit):
         self.schema = schema
         self.marshal_method = generate_marshall_method(
             schema, context=JitContext(use_cython=use_cython))
-        self.unmarshal_method = None
+        self.unmarshal_method = generate_unmarshall_method(
+            schema, context=JitContext(use_cython=use_cython))
 
     @property
     def jitted_marshal_method(self):
