@@ -51,7 +51,8 @@ setup(
     extras_require={'reco': EXTRA_REQUIREMENTS},
     license='apache2',
     install_requires=[
-        'attrs >= 17.1.0'
+        'attrs >= 17.1.0',
+        'six'
     ],
     zip_safe=False,
     keywords=(
