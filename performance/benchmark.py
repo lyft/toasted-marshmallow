@@ -10,7 +10,7 @@ import gc
 import time
 import timeit
 from marshmallow import Schema, fields, ValidationError
-from toastedmarshmallow import CythonJit, Jit
+from toastedmarshmallow import CythonJitSchema, JitSchema
 
 
 # Custom validator
@@ -19,42 +19,49 @@ def must_not_be_blank(data):
         raise ValidationError('Data not provided.')
 
 
-class AuthorSchema(Schema):
-    class Meta:
-        jit_options = {
-            'no_callable_fields': True,
-        }
-    id = fields.Int(dump_only=True)
-    first = fields.Str()
-    last = fields.Str()
-    book_count = fields.Float()
-    age = fields.Float()
-    address = fields.Str()
-    deceased = fields.Boolean()
+def create_quotes_schema(jit, cython):
+    if jit:
+        SchemaBase = CythonJitSchema if cython else JitSchema
+    else:
+        SchemaBase = Schema
 
-    def full_name(self, obj):
-        return obj.first + ' ' + obj.last
+    class AuthorSchema(SchemaBase):
+        class Meta:
+            jit_options = {
+                'no_callable_fields': True,
+            }
+        id = fields.Int(dump_only=True)
+        first = fields.Str()
+        last = fields.Str()
+        book_count = fields.Float()
+        age = fields.Float()
+        address = fields.Str()
+        deceased = fields.Boolean()
 
-    def format_name(self, author):
-        return "{0}, {1}".format(author.last, author.first)
+        def full_name(self, obj):
+            return obj.first + ' ' + obj.last
 
+        def format_name(self, author):
+            return "{0}, {1}".format(author.last, author.first)
 
-class QuoteSchema(Schema):
-    class Meta:
-        jit_options = {
-            'no_callable_fields': True,
-            'expected_marshal_type': 'object',
-        }
+    class QuoteSchema(SchemaBase):
+        class Meta:
+            jit_options = {
+                'no_callable_fields': True,
+                'expected_marshal_type': 'object',
+            }
 
-    id = fields.Int(dump_only=True)
-    author = fields.Nested(AuthorSchema)
-    content = fields.Str(required=True)
-    posted_at = fields.Int(dump_only=True)
-    book_name = fields.Str()
-    page_number = fields.Float()
-    line_number = fields.Float()
-    col_number = fields.Float()
-    is_verified = fields.Boolean()
+        id = fields.Int(dump_only=True)
+        author = fields.Nested(AuthorSchema)
+        content = fields.Str(required=True)
+        posted_at = fields.Int(dump_only=True)
+        book_name = fields.Str()
+        page_number = fields.Float()
+        line_number = fields.Float()
+        col_number = fields.Float()
+        is_verified = fields.Boolean()
+
+    return QuoteSchema(many=True)
 
 
 class Author(object):
@@ -84,12 +91,7 @@ class Quote(object):
 
 def run_timeit(quotes, iterations, repeat, jit=False, load=False,
                cython=False, profile=False):
-    quotes_schema = QuoteSchema(many=True)
-    if jit:
-        if cython:
-            quotes_schema.jit = CythonJit
-        else:
-            quotes_schema.jit = Jit
+    quotes_schema = create_quotes_schema(jit, cython)
     if profile:
         profile = cProfile.Profile()
         profile.enable()
