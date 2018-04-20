@@ -42,6 +42,8 @@ class JitMethodWrapper(object):
                 JitContext(use_cython=self.use_cython)
             )
 
+        self._prev_fields_dict = fields_dict
+
     def generate_jit_method(self, schema, context):
         raise NotImplementedError()
 
