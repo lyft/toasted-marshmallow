@@ -10,7 +10,7 @@ import gc
 import time
 import timeit
 from marshmallow import Schema, fields, ValidationError
-from toastedmarshmallow import CythonJit, Jit
+from toastedmarshmallow import Jit
 
 
 # Custom validator
@@ -83,13 +83,10 @@ class Quote(object):
 
 
 def run_timeit(quotes, iterations, repeat, jit=False, load=False,
-               cython=False, profile=False):
+               profile=False):
     quotes_schema = QuoteSchema(many=True)
     if jit:
-        if cython:
-            quotes_schema.jit = CythonJit
-        else:
-            quotes_schema.jit = Jit
+        quotes_schema.jit = Jit
     if profile:
         profile = cProfile.Profile()
         profile.enable()
@@ -146,37 +143,19 @@ def main():
     optimized_dump_time = run_timeit(quotes, args.iterations, args.repeat,
                                      load=False, jit=True,
                                      profile=args.profile)
-    cython_dump_time = run_timeit(quotes, args.iterations, args.repeat,
-                                  load=False, jit=True, cython=True,
-                                  profile=args.profile)
     optimized_load_time = run_timeit(quotes, args.iterations, args.repeat,
                                      load=True, jit=True, profile=args.profile)
-    cython_load_time = run_timeit(quotes, args.iterations, args.repeat,
-                                  load=True, jit=True, cython=True,
-                                  profile=args.profile)
     print('Benchmark Result:')
     print('\tOriginal Dump Time: {0:.2f} usec/dump'.format(original_dump_time))
     print('\tOptimized Dump Time: {0:.2f} usec/dump'.format(
         optimized_dump_time))
-    print('\tOptimized (Cython) Dump Time: {0:.2f} usec/dump'.format(
-        cython_dump_time))
     print('\tOriginal Load Time: {0:.2f} usec/load'.format(original_load_time))
     print('\tOptimized Load Time: {0:.2f} usec/load'.format(
         optimized_load_time))
-    print('\tOptimized (Cython) Time: {0:.2f} usec/load'.format(
-        cython_load_time))
     print('\tSpeed up for dump: {0:.2f}x'.format(
         original_dump_time / optimized_dump_time))
-    print('\tCython Speed up for dump: {0:.2f}x'.format(
-        original_dump_time / cython_dump_time))
-    print('\tCython Speed up over Python Jit for dump: {0:.2f}x'.format(
-        optimized_dump_time / cython_dump_time))
     print('\tSpeed up for load: {0:.2f}x'.format(
         original_load_time / optimized_load_time))
-    print('\tCython Speed up for load: {0:.2f}x'.format(
-        original_load_time / cython_load_time))
-    print('\tCython Speed up over Python Jit for load: {0:.2f}x'.format(
-        optimized_load_time / cython_load_time))
 
 
 if __name__ == '__main__':

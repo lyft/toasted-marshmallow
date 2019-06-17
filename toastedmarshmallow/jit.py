@@ -13,9 +13,6 @@ from .compat import is_overridden
 from .utils import IndentedString
 
 
-CYTHON_AVAILABLE = False
-
-
 # Regular Expression for identifying a valid Python identifier name.
 _VALID_IDENTIFIER = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
 
@@ -174,7 +171,6 @@ class JitContext(object):
 
     """
     namespace = attr.ib(default={})  # type: Dict[str, Any]
-    use_cython = attr.ib(default=False)  # type: bool
     use_inliners = attr.ib(default=True)  # type: bool
     schema_stack = attr.ib(default=attr.Factory(set))  # type: Set[str]
     only = attr.ib(default=None)  # type: Optional[Set[str]]
@@ -341,11 +337,24 @@ EXPECTED_TYPE_TO_CLASS = {
 
 def _should_skip_field(field_name, field_obj, context):
     # type: (str, fields.Field, JitContext) -> bool
-    if (getattr(field_obj, 'load_only', False) and
-            context.is_serializing):
+    load_only = getattr(field_obj, 'load_only', False)
+    dump_only = getattr(field_obj, 'dump_only', False)
+    # Marshmallow 2.x.x doesn't properly set load_only or
+    # dump_only on Method objects.  This is fixed in 3.0.0
+    # https://github.com/marshmallow-code/marshmallow/commit/1b676dd36cbb5cf040da4f5f6d43b0430684325c
+    if isinstance(field_obj, fields.Method):
+        load_only = (
+            bool(field_obj.deserialize_method_name) and
+            not bool(field_obj.serialize_method_name)
+        )
+        dump_only = (
+            bool(field_obj.serialize_method_name) and
+            not bool(field_obj.deserialize_method_name)
+        )
+
+    if load_only and context.is_serializing:
         return True
-    if (getattr(field_obj, 'dump_only', False) and
-            not context.is_serializing):
+    if dump_only and not context.is_serializing:
         return True
     if context.only and field_name not in context.only:
         return True
@@ -631,7 +640,6 @@ def generate_marshall_method(schema, context=missing, threshold=100):
     :param schema: The Schema to generate a marshall method for.
     :param threshold: The number of calls of the same type to observe before
         specializing the marshal method for that type.
-    :param use_cython: Whether or not to attempt to use cython when Jitting.
     :return: A Callable that can be used to marshall objects for the schema
     """
     if is_overridden(schema.get_attribute, Schema.get_attribute):

@@ -6,6 +6,7 @@ pytest==3.0.7
 pytest-cov==2.5.1
 python-coveralls==2.9.1
 pylint==1.7.1
+astroid==1.5.3
 python-dateutil==2.6.1
 pytz==2017.2
 simplejson==3.11.1

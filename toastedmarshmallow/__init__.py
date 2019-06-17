@@ -10,13 +10,13 @@ __version__ = '0.2.6'
 
 
 class Jit(SchemaJit):
-    def __init__(self, schema, use_cython=False):
+    def __init__(self, schema):
         super(Jit, self).__init__(schema)
         self.schema = schema
         self.marshal_method = generate_marshall_method(
-            schema, context=JitContext(use_cython=use_cython))
+            schema, context=JitContext())
         self.unmarshal_method = generate_unmarshall_method(
-            schema, context=JitContext(use_cython=use_cython))
+            schema, context=JitContext())
 
     @property
     def jitted_marshal_method(self):
@@ -25,8 +25,3 @@ class Jit(SchemaJit):
     @property
     def jitted_unmarshal_method(self):
         return self.unmarshal_method
-
-
-class CythonJit(Jit):
-    def __init__(self, schema):
-        super(CythonJit, self).__init__(schema, use_cython=True)

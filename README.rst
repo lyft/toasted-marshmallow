@@ -13,9 +13,7 @@ without having to sacrifice performance!
     Benchmark Result:
       Original Time: 2682.61 usec/dump
       Optimized Time: 176.38 usec/dump
-      Optimized (Cython) Time: 125.77 usec/dump
       Speed up: 15.21x
-      Cython Speed up: 21.33x
 
 Even ``PyPy`` benefits from ``toastedmarshmallow``!
 
@@ -140,17 +138,3 @@ Toastedmarshmallow will invoke the proper serializer based upon the input.
 Since Toastedmarshmallow is generating code at runtime, it's critical you
 re-use Schema objects.  If you're creating a new Schema object every time you
 serialize/deserialize an object you'll likely have much worse performance.
-
-:zap::microscope: Experimental :microscope::zap:
---------------------------------------------------
-
-Toastedmarshmallow also has an experimental Cython based jit.  It takes the
-generated code above and runs it through Cython first, getting another 1.5x
-win.  Generally the generated Python code is fast enough, but this is a useful
-option when you've got to squeeze out every last bit of performance.
-
-To use the Cython jit, replace `Jit` with `CythonJit`:
-
-.. code-block:: python
-
-    schema.jit = toastedmarshmallow.CythonJit
