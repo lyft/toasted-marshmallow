@@ -12,10 +12,8 @@ def schema():
     return TestSchema()
 
 
-@pytest.mark.parametrize('jit', [toastedmarshmallow.Jit,
-                                 toastedmarshmallow.CythonJit])
-def test_marshmallow_integration_dump(schema, jit):
-    schema.jit = jit
+def test_marshmallow_integration_dump(schema):
+    schema.jit = toastedmarshmallow.Jit
     assert schema._jit_instance is not None
 
     result = schema.dump({'key': 'hello', 'value': 32})
@@ -29,10 +27,8 @@ def test_marshmallow_integration_dump(schema, jit):
     assert schema._jit_instance is not None
 
 
-@pytest.mark.parametrize('jit', [toastedmarshmallow.Jit,
-                                 toastedmarshmallow.CythonJit])
-def test_marshmallow_integration_load(schema, jit):
-    schema.jit = jit
+def test_marshmallow_integration_load(schema):
+    schema.jit = toastedmarshmallow.Jit
     assert schema._jit_instance is not None
 
     result = schema.load({'key': 'hello', 'value': 32})
@@ -45,10 +41,8 @@ def test_marshmallow_integration_load(schema, jit):
     assert schema._jit_instance is not None
 
 
-@pytest.mark.parametrize('jit', [toastedmarshmallow.Jit,
-                                 toastedmarshmallow.CythonJit])
-def test_marshmallow_integration_invalid_data(schema, jit):
-    schema.jit = jit
+def test_marshmallow_integration_invalid_data(schema):
+    schema.jit = toastedmarshmallow.Jit
     assert schema._jit_instance is not None
     result = schema.dump({'key': 'hello', 'value': 'foo'})
     assert {'value': ['Not a valid integer.']} == result.errors

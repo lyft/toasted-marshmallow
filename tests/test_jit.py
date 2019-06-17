@@ -318,9 +318,8 @@ def test_jit_bails_nested_attribute():
     assert marshal_method is None
 
 
-@pytest.mark.parametrize('use_cython', [True, False])
-def test_jitted_marshal_method(schema, use_cython):
-    context = JitContext(use_cython=use_cython)
+def test_jitted_marshal_method(schema):
+    context = JitContext()
     marshal_method = generate_marshall_method(schema, threshold=1,
                                               context=context)
     result = marshal_method({
@@ -344,10 +343,8 @@ def test_jitted_marshal_method(schema, use_cython):
     assert marshal_method.proxy._call == marshal_method.proxy.dict_serializer
 
 
-@pytest.mark.skip(reason="roy what is going on")
-@pytest.mark.parametrize('use_cython', [True, False])
-def test_jitted_unmarshal_method(schema, use_cython):
-    context = JitContext(use_cython=use_cython)
+def test_jitted_unmarshal_method(schema):
+    context = JitContext()
     unmarshal_method = generate_unmarshall_method(schema, context=context)
     result = unmarshal_method({
         'foo': 32,
