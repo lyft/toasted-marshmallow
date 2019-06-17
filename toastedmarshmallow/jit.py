@@ -352,9 +352,9 @@ def _should_skip_field(field_name, field_obj, context):
             not bool(field_obj.deserialize_method_name)
         )
 
-    if (load_only and context.is_serializing):
+    if load_only and context.is_serializing:
         return True
-    if (dump_only and not context.is_serializing):
+    if dump_only and not context.is_serializing:
         return True
     if context.only and field_name not in context.only:
         return True
