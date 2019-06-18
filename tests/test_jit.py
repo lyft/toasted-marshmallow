@@ -101,6 +101,19 @@ def schema():
     return BasicSchema()
 
 
+class RoundedFloat(fields.Float):
+    def __init__(self, places, **kwargs):
+        super(fields.Float, self).__init__(**kwargs)
+        self.num_type = lambda x: round(x, places)
+
+
+@pytest.fixture
+def non_primitive_num_type_schema():
+    class NonPrimitiveNumTypeSchema(Schema):
+        gps_longitude = RoundedFloat(places=6, attribute='lng')
+    return NonPrimitiveNumTypeSchema()
+
+
 def test_field_symbol_name():
     assert '_field_hello' == field_symbol_name('hello')
     assert '_field_MHdvcmxkMA' == field_symbol_name('0world0')
@@ -341,6 +354,16 @@ def test_jitted_marshal_method(schema):
     })
     assert expected == result
     assert marshal_method.proxy._call == marshal_method.proxy.dict_serializer
+
+
+def test_non_primitive_num_type_schema(non_primitive_num_type_schema):
+    context = JitContext()
+    marshall_method = generate_marshall_method(
+        non_primitive_num_type_schema, threshold=1, context=context
+    )
+    result = marshall_method({})
+    expected = {}
+    assert expected == result
 
 
 def test_jitted_unmarshal_method(schema):
