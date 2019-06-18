@@ -249,7 +249,8 @@ class NumberInliner(FieldInliner):
         be coerced to a string if not None.
         """
         if (is_overridden(field._validated, fields.Number._validated) or
-                is_overridden(field._serialize, fields.Number._serialize)):
+                is_overridden(field._serialize, fields.Number._serialize) or
+                field.num_type not in (int, float)):
             return None
         result = field.num_type.__name__ + '({0})'
         if field.as_string and context.is_serializing:
