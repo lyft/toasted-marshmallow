@@ -103,7 +103,7 @@ def schema():
 
 class RoundedFloat(fields.Float):
     def __init__(self, places, **kwargs):
-        super().__init__(**kwargs)
+        super(fields.Float, self).__init__(**kwargs)
         self.num_type = lambda x: round(x, places)
 
 
