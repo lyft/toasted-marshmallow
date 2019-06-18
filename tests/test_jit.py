@@ -358,8 +358,9 @@ def test_jitted_marshal_method(schema):
 
 def test_non_primitive_num_type_schema(non_primitive_num_type_schema):
     context = JitContext()
-    marshall_method = generate_marshall_method(non_primitive_num_type_schema, threshold=1,
-                                               context=context)
+    marshall_method = generate_marshall_method(
+        non_primitive_num_type_schema, threshold=1, context=context
+    )
     result = marshall_method({})
     expected = {}
     assert expected == result
