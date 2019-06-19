@@ -183,7 +183,7 @@ def InstanceSerializer(obj):
         'if "@#" in obj:\n'
         '        value = obj["@#"]; '
         'value = value() if callable(value) else value; '
-        'value = int(value); '
+        'value = int(value) if value is not None else None; '
         'res["foo"] = value')
     bar_assignment = (
         'value = obj.bar; '
@@ -220,13 +220,13 @@ def test_generate_marshall_method_bodies():
 def InstanceSerializer(obj):
     res = {}
     value = obj.foo; value = value() if callable(value) else value; \
-value = int(value); res["foo"] = value
+value = int(value) if value is not None else None; res["foo"] = value
     return res
 def DictSerializer(obj):
     res = {}
     if "foo" in obj:
         value = obj["foo"]; value = value() if callable(value) else value; \
-value = int(value); res["foo"] = value
+value = int(value) if value is not None else None; res["foo"] = value
     return res
 def HybridSerializer(obj):
     res = {}
@@ -235,7 +235,7 @@ def HybridSerializer(obj):
     except (KeyError, AttributeError, IndexError, TypeError):
         value = obj.foo
     value = value; value = value() if callable(value) else value; \
-value = int(value); res["foo"] = value
+value = int(value) if value is not None else None; res["foo"] = value
     return res'''
     assert expected == result
 
@@ -440,6 +440,19 @@ def test_instance_jitted_instance_marshal_method(simple_schema,
     assert simple_dict == result
     assert (marshal_method.proxy._call ==
             marshal_method.proxy.instance_serializer)
+
+
+def test_instance_jitted_instance_marshal_method_supports_none_int(
+        simple_schema, simple_object
+):
+    simple_object.value = None
+    marshal_method = generate_marshall_method(simple_schema)
+    result = marshal_method(simple_object)
+    expected = {
+        'key': 'some_key',
+        'value': None
+    }
+    assert expected == result
 
 
 def test_optimized_jitted_marshal_method(optimized_schema, simple_object):
