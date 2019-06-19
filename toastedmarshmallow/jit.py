@@ -255,7 +255,7 @@ class NumberInliner(FieldInliner):
         result = field.num_type.__name__ + '({0})'
         if field.as_string and context.is_serializing:
             result = 'str({0})'.format(result)
-        if field.allow_none is True:
+        if field.allow_none is True or context.is_serializing:
             # Only emit the Null checking code if nulls are allowed.  If they
             # aren't allowed casting `None` to an integer will throw and the
             # slow path will take over.

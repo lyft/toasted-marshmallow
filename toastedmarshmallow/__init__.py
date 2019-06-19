@@ -6,7 +6,7 @@ from .jit import (
     JitContext
 )
 
-__version__ = '2.15.2'
+__version__ = '2.15.2post1'
 
 
 class Jit(SchemaJit):
