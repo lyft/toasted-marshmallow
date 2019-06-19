@@ -442,7 +442,9 @@ def test_instance_jitted_instance_marshal_method(simple_schema,
             marshal_method.proxy.instance_serializer)
 
 
-def test_instance_jitted_instance_marshal_method_supports_none_int(simple_schema, simple_object):
+def test_instance_jitted_instance_marshal_method_supports_none_int(
+        simple_schema, simple_object
+):
     simple_object.value = None
     marshal_method = generate_marshall_method(simple_schema)
     result = marshal_method(simple_object)
@@ -451,7 +453,6 @@ def test_instance_jitted_instance_marshal_method_supports_none_int(simple_schema
         'value': None
     }
     assert expected == result
-
 
 
 def test_optimized_jitted_marshal_method(optimized_schema, simple_object):
