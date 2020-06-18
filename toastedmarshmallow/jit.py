@@ -391,8 +391,11 @@ def generate_transform_method_body(schema, on_field, context):
                                                                field_name,
                                                                field_obj)
 
-            result_key = ''.join(
-                [schema.prefix or '', destination])
+            # https://marshmallow.readthedocs.io/en/stable/upgrading.html
+            #    #the-prefix-schema-parameter-is-removed
+            # result_key = ''.join(
+            #    [schema.prefix or '', destination])
+            result_key = destination
 
             field_symbol = field_symbol_name(field_name)
             assignment_template = ''
@@ -440,7 +443,7 @@ def generate_transform_method_body(schema, on_field, context):
                 body += serializer.serialize(
                     attr_name, field_symbol, assignment_template, field_obj)
 
-                if not context.is_serializing and field_obj.load_from:
+                if not context.is_serializing and field_obj.data_key:
                     # Marshmallow has a somewhat counter intuitive behavior.
                     # It will first load from the name of the field, then,
                     # should that fail, will load from the field specified in
@@ -465,7 +468,7 @@ def generate_transform_method_body(schema, on_field, context):
                     body += 'if "{key}" not in res:'.format(key=result_key)
                     with body.indent():
                         body += serializer.serialize(
-                            field_obj.load_from, field_symbol,
+                            field_obj.data_key, field_symbol,
                             assignment_template, field_obj)
             if not context.is_serializing:
                 if field_obj.required:
@@ -498,7 +501,7 @@ def _generate_fallback_access_template(context, field_name, field_obj,
         transform_method_name = 'deserialize'
     key_name = field_name
     if not context.is_serializing:
-        key_name = field_obj.load_from or field_name
+        key_name = field_obj.data_key or field_name
     return (
         'res["{key}"] = {field_symbol}__{transform}('
         '{value_key}, "{key_name}", obj)'.format(
@@ -514,7 +517,7 @@ def _get_attr_and_destination(context, field_name, field_obj):
     # The destination of the field in the result dictionary.
     destination = field_name
     if context.is_serializing:
-        destination = field_obj.dump_to or field_name
+        destination = field_obj.data_key or field_name
     if field_obj.attribute:
         if context.is_serializing:
             attr_name = field_obj.attribute
