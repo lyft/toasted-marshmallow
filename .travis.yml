@@ -4,12 +4,9 @@ cache: pip
 
 matrix:
   include:
-    - python: "2.7"
-    - python: "3.4"
-    - python: "3.5"
     - python: "3.6"
-    - python: "pypy"
-
+    - python: "3.7"
+    - python: "3.8"
 
 before_install:
   - pip install pip setuptools --upgrade
@@ -17,16 +14,13 @@ before_install:
 install:
   - pip install -r dev-requirements.txt
   - python setup.py install
-  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then pip install mypy; fi
 
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then mypy --ignore-missing-imports --follow-imports=silent --python-version=3.6 --warn-no-return --strict-optional toastedmarshmallow tests; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then mypy --ignore-missing-imports --follow-imports=silent --python-version=2.7 --warn-no-return --strict-optional toastedmarshmallow tests; fi
-  - if [[ $TRAVIS_PYTHON_VERSION != "pypy" ]]; then flake8 performance tests; fi
-  - if [[ $TRAVIS_PYTHON_VERSION != "pypy" ]]; then pylint toastedmarshmallow; fi
+  #- mypy --ignore-missing-imports --follow-imports=silent --warn-no-return --strict-optional toastedmarshmallow tests
+  - flake8 performance tests
+  - pylint toastedmarshmallow
   - python -m pytest --cov toastedmarshmallow --cov-report term-missing tests
   - python performance/benchmark.py
-  - ./tests/run_marshmallow_tests.sh
 
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
