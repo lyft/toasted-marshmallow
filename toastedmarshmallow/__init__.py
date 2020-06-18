@@ -9,7 +9,7 @@ from .jit import (
 __version__ = '2.15.2post1'
 
 
-class JitMethodWrapper(object):
+class JitMethodWrapper():
     use_cython = False
 
     def __init__(self, schema, method):
@@ -25,11 +25,11 @@ class JitMethodWrapper(object):
         try:
             result = self._jit_method(obj, many=many)
         except (
-            ValidationError,
-            KeyError,
-            AttributeError,
-            ValueError,
-            TypeError
+                ValidationError,
+                KeyError,
+                AttributeError,
+                ValueError,
+                TypeError
         ):
             result = self._method(obj, fields_dict, many=many, **kwargs)
 

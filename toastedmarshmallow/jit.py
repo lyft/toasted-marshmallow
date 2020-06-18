@@ -2,7 +2,7 @@ import base64
 import keyword
 import re
 from abc import ABCMeta, abstractmethod
-from collections import Mapping
+from collections.abc import Mapping
 
 import attr
 from six import exec_, iteritems, add_metaclass, text_type, string_types
@@ -48,7 +48,7 @@ def attr_str(attr_name):
 
 
 @add_metaclass(ABCMeta)
-class FieldSerializer(object):
+class FieldSerializer():
     """Base class for generating code to serialize a field.
     """
     def __init__(self, context=None):
@@ -65,7 +65,7 @@ class FieldSerializer(object):
         """Generates the code to pull a field off of an object into the result.
 
         :param attr_name: The name of the attribute being accessed/
-        :param field_symbol: The symbol to use when accessing the field.  Should
+        :param field_symbol: The symbol to use when accessing the field. Should
             be generated via field_symbol_name.
         :param assignment_template: A string template to use when generating
             code.  The assignment template is passed into the serializer and
@@ -94,7 +94,7 @@ class InstanceSerializer(FieldSerializer):
 
 class DictSerializer(FieldSerializer):
     """Generates code for accessing fields as if they were a dict, generating
-    the proper code for handing missing fields as well.  For example, generates:
+    the proper code for handing missing fields as well. For example, generates:
 
     # Required field with no default
     res['some_value'] = obj['some_value']
@@ -166,7 +166,7 @@ class HybridSerializer(FieldSerializer):
 
 
 @attr.s
-class JitContext(object):
+class JitContext():
     """ Bag of properties to keep track of the context of what's being jitted.
 
     """
@@ -180,7 +180,7 @@ class JitContext(object):
 
 
 @add_metaclass(ABCMeta)
-class FieldInliner(object):
+class FieldInliner():
     """Base class for generating code to serialize a field.
 
     Inliners are used to generate the code to validate/parse fields without
@@ -433,8 +433,8 @@ def generate_transform_method_body(schema, on_field, context):
             else:
                 serializer = on_field
                 if not _VALID_IDENTIFIER.match(attr_name):
-                    # If attr_name is not a valid python identifier, it can only
-                    # be accessed via key lookups.
+                    # If attr_name is not a valid python identifier, it can
+                    # only be accessed via key lookups.
                     serializer = DictSerializer(context)
 
                 body += serializer.serialize(
@@ -571,7 +571,7 @@ def generate_method_bodies(schema, context):
     return str(result)
 
 
-class SerializeProxy(object):
+class SerializeProxy():
     """Proxy object for calling serializer methods.
 
     Initially trace calls to serialize and if the number of calls
@@ -602,14 +602,17 @@ class SerializeProxy(object):
         """Dispatcher which traces calls and specializes if possible.
         """
         try:
+            ret = None
             if isinstance(obj, Mapping):
                 self.dict_count += 1
-                return self.dict_serializer(obj)
+                ret = self.dict_serializer(obj)
             elif hasattr(obj, '__getitem__'):
                 self.hybrid_count += 1
-                return self.hybrid_serializer(obj)
-            self.instance_count += 1
-            return self.instance_serializer(obj)
+                ret = self.hybrid_serializer(obj)
+            else:
+                self.instance_count += 1
+                ret = self.instance_serializer(obj)
+            return ret
         finally:
             non_zeros = [x for x in
                          [self.dict_count,
@@ -628,11 +631,14 @@ class SerializeProxy(object):
         # type: (Any) -> Any
         """Dispatcher with no tracing.
         """
+        ret = None
         if isinstance(obj, Mapping):
-            return self.dict_serializer(obj)
+            ret = self.dict_serializer(obj)
         elif hasattr(obj, '__getitem__'):
-            return self.hybrid_serializer(obj)
-        return self.instance_serializer(obj)
+            ret = self.hybrid_serializer(obj)
+        else:
+            ret = self.instance_serializer(obj)
+        return ret
 
 
 def generate_marshall_method(schema, context=missing, threshold=100):

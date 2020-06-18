@@ -6,7 +6,7 @@ if False:  # pylint: disable=using-constant-test
     from typing import List, Union
 
 
-class IndentedString(object):
+class IndentedString():
     """Utility class for printing indented strings via a context manager.
 
     """
