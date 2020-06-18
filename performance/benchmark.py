@@ -150,23 +150,39 @@ def main():
                                      profile=args.profile)
     optimized_load_time = run_timeit(quotes, args.iterations, args.repeat,
                                      load=True, jit=True, profile=args.profile)
-    optimized_cython_dump_time = run_timeit(quotes, args.iterations, args.repeat,
-                                            load=False, jit=True, cython=True,
-                                            profile=args.profile)
-    optimized_cython_load_time = run_timeit(quotes, args.iterations, args.repeat,
-                                            load=True, jit=True, cython=True,
-                                            profile=args.profile)
+    optimized_cython_dump_time = run_timeit(quotes, args.iterations,
+                                            args.repeat, load=False, jit=True,
+                                            cython=True, profile=args.profile)
+    optimized_cython_load_time = run_timeit(quotes, args.iterations,
+                                            args.repeat, load=True, jit=True,
+                                            cython=True, profile=args.profile)
     print('Benchmark Result:')
     print('\tOriginal Dump Time: {0:.2f} usec/dump'.format(original_dump_time))
-    print('\tOptimized Dump Time: {0:.2f} usec/dump'.format(optimized_dump_time))
-    print('\tOptimized Cython Dump Time: {0:.2f} usec/dump'.format(optimized_cython_dump_time))
+    print('\tOptimized Dump Time: {0:.2f} usec/dump'.format(
+        optimized_dump_time
+    ))
+    print('\tOptimized Cython Dump Time: {0:.2f} usec/dump'.format(
+        optimized_cython_dump_time
+    ))
     print('\tOriginal Load Time: {0:.2f} usec/load'.format(original_load_time))
-    print('\tOptimized Load Time: {0:.2f} usec/load'.format(optimized_load_time))
-    print('\tOptimized Cython Load Time: {0:.2f} usec/load'.format(optimized_cython_load_time))
-    print('\tSpeed up for dump: {0:.2f}x'.format(original_dump_time / optimized_dump_time))
-    print('\tSpeed up for cython dump: {0:.2f}x'.format(original_dump_time / optimized_cython_dump_time))
-    print('\tSpeed up for load: {0:.2f}x'.format(original_load_time / optimized_load_time))
-    print('\tSpeed up for cython load: {0:.2f}x'.format(original_load_time / optimized_cython_load_time))
+    print('\tOptimized Load Time: {0:.2f} usec/load'.format(
+        optimized_load_time
+    ))
+    print('\tOptimized Cython Load Time: {0:.2f} usec/load'.format(
+        optimized_cython_load_time
+    ))
+    print('\tSpeed up for dump: {0:.2f}x'.format(
+        original_dump_time / optimized_dump_time
+    ))
+    print('\tSpeed up for cython dump: {0:.2f}x'.format(
+        original_dump_time / optimized_cython_dump_time
+    ))
+    print('\tSpeed up for load: {0:.2f}x'.format(
+        original_load_time / optimized_load_time
+    ))
+    print('\tSpeed up for cython load: {0:.2f}x'.format(
+        original_load_time / optimized_cython_load_time
+    ))
 
 
 if __name__ == '__main__':

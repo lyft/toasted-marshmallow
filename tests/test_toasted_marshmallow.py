@@ -1,5 +1,5 @@
 import pytest
-from marshmallow import Schema, fields
+from marshmallow import fields
 
 import toastedmarshmallow
 
@@ -23,6 +23,7 @@ def test_marshmallow_integration_dump(schema):
     result = schema.dump({'value': 32})
     assert not result.errors
     assert result.data == {'key': 'world', 'value': 32}
+
 
 def test_marshmallow_integration_load(schema):
     result = schema.load({'key': 'hello', 'value': 32})
