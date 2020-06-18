@@ -176,6 +176,7 @@ class JitContext(object):
     only = attr.ib(default=None)  # type: Optional[Set[str]]
     exclude = attr.ib(default=set())  # type: Set[str]
     is_serializing = attr.ib(default=True)  # type: bool
+    use_cython = attr.ib(default=False)  # type: bool
 
 
 @add_metaclass(ABCMeta)
