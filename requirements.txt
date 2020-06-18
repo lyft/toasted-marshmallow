@@ -1,0 +1,4 @@
+six==1.15.0
+attr==0.3.1
+marshmallow==3.6.1
+protobuf==3.12.2

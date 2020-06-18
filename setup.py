@@ -48,7 +48,7 @@ setup(
     license='apache2',
     install_requires=[
         'attrs >= 17.1.0',
-        'marshmallow == 3.0.0b2',
+        'marshmallow >= 3.0.0b7',
         'six',
     ],
     zip_safe=False,
