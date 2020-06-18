@@ -41,7 +41,7 @@ setup(
     long_description=read('README.rst'),
     author='Roy Williams',
     author_email='rwilliams@lyft.com',
-    url='https://github.com/lyft/toastedmarshmallow',
+    url='https://github.com/lyft/toasted-marshmallow',
     packages=['toastedmarshmallow', 'marshmallow'],
     package_dir={
         'toastedmarshmallow': 'toastedmarshmallow',
@@ -65,7 +65,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: Implementation :: CPython',
