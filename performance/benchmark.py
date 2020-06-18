@@ -10,7 +10,7 @@ import gc
 import time
 import timeit
 from marshmallow import Schema, fields, ValidationError
-from toastedmarshmallow import Jit
+from toastedmarshmallow import CythonJitSchema, JitSchema
 
 
 # Custom validator
@@ -19,42 +19,49 @@ def must_not_be_blank(data):
         raise ValidationError('Data not provided.')
 
 
-class AuthorSchema(Schema):
-    class Meta:
-        jit_options = {
-            'no_callable_fields': True,
-        }
-    id = fields.Int(dump_only=True)
-    first = fields.Str()
-    last = fields.Str()
-    book_count = fields.Float()
-    age = fields.Float()
-    address = fields.Str()
-    deceased = fields.Boolean()
+def create_quotes_schema(jit, cython):
+    if jit:
+        SchemaBase = CythonJitSchema if cython else JitSchema
+    else:
+        SchemaBase = Schema
 
-    def full_name(self, obj):
-        return obj.first + ' ' + obj.last
+    class AuthorSchema(SchemaBase):
+        class Meta:
+            jit_options = {
+                'no_callable_fields': True,
+            }
+        id = fields.Int(dump_only=True)
+        first = fields.Str()
+        last = fields.Str()
+        book_count = fields.Float()
+        age = fields.Float()
+        address = fields.Str()
+        deceased = fields.Boolean()
 
-    def format_name(self, author):
-        return "{0}, {1}".format(author.last, author.first)
+        def full_name(self, obj):
+            return obj.first + ' ' + obj.last
 
+        def format_name(self, author):
+            return "{0}, {1}".format(author.last, author.first)
 
-class QuoteSchema(Schema):
-    class Meta:
-        jit_options = {
-            'no_callable_fields': True,
-            'expected_marshal_type': 'object',
-        }
+    class QuoteSchema(SchemaBase):
+        class Meta:
+            jit_options = {
+                'no_callable_fields': True,
+                'expected_marshal_type': 'object',
+            }
 
-    id = fields.Int(dump_only=True)
-    author = fields.Nested(AuthorSchema)
-    content = fields.Str(required=True)
-    posted_at = fields.Int(dump_only=True)
-    book_name = fields.Str()
-    page_number = fields.Float()
-    line_number = fields.Float()
-    col_number = fields.Float()
-    is_verified = fields.Boolean()
+        id = fields.Int(dump_only=True)
+        author = fields.Nested(AuthorSchema)
+        content = fields.Str(required=True)
+        posted_at = fields.Int(dump_only=True)
+        book_name = fields.Str()
+        page_number = fields.Float()
+        line_number = fields.Float()
+        col_number = fields.Float()
+        is_verified = fields.Boolean()
+
+    return QuoteSchema(many=True)
 
 
 class Author(object):
@@ -83,10 +90,8 @@ class Quote(object):
 
 
 def run_timeit(quotes, iterations, repeat, jit=False, load=False,
-               profile=False):
-    quotes_schema = QuoteSchema(many=True)
-    if jit:
-        quotes_schema.jit = Jit
+               cython=False, profile=False):
+    quotes_schema = create_quotes_schema(jit, cython)
     if profile:
         profile = cProfile.Profile()
         profile.enable()
@@ -145,17 +150,39 @@ def main():
                                      profile=args.profile)
     optimized_load_time = run_timeit(quotes, args.iterations, args.repeat,
                                      load=True, jit=True, profile=args.profile)
+    optimized_cython_dump_time = run_timeit(quotes, args.iterations,
+                                            args.repeat, load=False, jit=True,
+                                            cython=True, profile=args.profile)
+    optimized_cython_load_time = run_timeit(quotes, args.iterations,
+                                            args.repeat, load=True, jit=True,
+                                            cython=True, profile=args.profile)
     print('Benchmark Result:')
     print('\tOriginal Dump Time: {0:.2f} usec/dump'.format(original_dump_time))
     print('\tOptimized Dump Time: {0:.2f} usec/dump'.format(
-        optimized_dump_time))
+        optimized_dump_time
+    ))
+    print('\tOptimized Cython Dump Time: {0:.2f} usec/dump'.format(
+        optimized_cython_dump_time
+    ))
     print('\tOriginal Load Time: {0:.2f} usec/load'.format(original_load_time))
     print('\tOptimized Load Time: {0:.2f} usec/load'.format(
-        optimized_load_time))
+        optimized_load_time
+    ))
+    print('\tOptimized Cython Load Time: {0:.2f} usec/load'.format(
+        optimized_cython_load_time
+    ))
     print('\tSpeed up for dump: {0:.2f}x'.format(
-        original_dump_time / optimized_dump_time))
+        original_dump_time / optimized_dump_time
+    ))
+    print('\tSpeed up for cython dump: {0:.2f}x'.format(
+        original_dump_time / optimized_cython_dump_time
+    ))
     print('\tSpeed up for load: {0:.2f}x'.format(
-        original_load_time / optimized_load_time))
+        original_load_time / optimized_load_time
+    ))
+    print('\tSpeed up for cython load: {0:.2f}x'.format(
+        original_load_time / optimized_cython_load_time
+    ))
 
 
 if __name__ == '__main__':

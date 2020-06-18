@@ -183,8 +183,7 @@ def InstanceSerializer(obj):
         'if "@#" in obj:\n'
         '        value = obj["@#"]; '
         'value = value() if callable(value) else value; '
-        'value = int(value) if value is not None else None; '
-        'res["foo"] = value')
+        'res["foo"] = _field_foo__serialize(value, "foo", obj)')
     bar_assignment = (
         'value = obj.bar; '
         'value = value() if callable(value) else value; '
@@ -220,13 +219,13 @@ def test_generate_marshall_method_bodies():
 def InstanceSerializer(obj):
     res = {}
     value = obj.foo; value = value() if callable(value) else value; \
-value = int(value) if value is not None else None; res["foo"] = value
+res["foo"] = _field_foo__serialize(value, "foo", obj)
     return res
 def DictSerializer(obj):
     res = {}
     if "foo" in obj:
         value = obj["foo"]; value = value() if callable(value) else value; \
-value = int(value) if value is not None else None; res["foo"] = value
+res["foo"] = _field_foo__serialize(value, "foo", obj)
     return res
 def HybridSerializer(obj):
     res = {}
@@ -235,7 +234,7 @@ def HybridSerializer(obj):
     except (KeyError, AttributeError, IndexError, TypeError):
         value = obj.foo
     value = value; value = value() if callable(value) else value; \
-value = int(value) if value is not None else None; res["foo"] = value
+res["foo"] = _field_foo__serialize(value, "foo", obj)
     return res'''
     assert expected == result
 
@@ -277,7 +276,7 @@ def HybridSerializer(obj):
 
 def test_generate_unmarshall_method_bodies_with_load_from():
     class OneFieldSchema(Schema):
-        foo = fields.Integer(load_from='bar', allow_none=True)
+        foo = fields.Integer(data_key='bar', allow_none=True)
     context = JitContext(is_serializing=False, use_inliners=False)
     result = str(generate_transform_method_body(OneFieldSchema(),
                                                 DictSerializer(context),

@@ -41,17 +41,15 @@ setup(
     long_description=read('README.rst'),
     author='Roy Williams',
     author_email='rwilliams@lyft.com',
-    url='https://github.com/lyft/toastedmarshmallow',
-    packages=['toastedmarshmallow', 'marshmallow'],
-    package_dir={
-        'toastedmarshmallow': 'toastedmarshmallow',
-        'marshmallow': 'marshmallow/marshmallow'
-    },
+    url='https://github.com/lyft/toasted-marshmallow',
+    packages=['toastedmarshmallow'],
     include_package_data=True,
     extras_require={'reco': EXTRA_REQUIREMENTS},
     license='apache2',
     install_requires=[
-        'attrs >= 17.1.0'
+        'attrs >= 17.1.0',
+        'marshmallow >= 3.0.0b7',
+        'six',
     ],
     zip_safe=False,
     keywords=(
