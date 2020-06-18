@@ -41,7 +41,7 @@ setup(
     long_description=read('README.rst'),
     author='Roy Williams',
     author_email='rwilliams@lyft.com',
-    url='https://github.com/lyft/toastedmarshmallow',
+    url='https://github.com/lyft/toasted-marshmallow',
     packages=['toastedmarshmallow'],
     include_package_data=True,
     extras_require={'reco': EXTRA_REQUIREMENTS},
