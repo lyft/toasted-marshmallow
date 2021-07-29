@@ -77,7 +77,7 @@ to specify all instances of a given ``Schema`` should be optimized:
 
     class ArtistSchema(Schema):
         class Meta:
-            jit = toastedMarshmallow.Jit
+            jit = toastedmarshmallow.Jit
         name = fields.Str()
 
 You can also enable Toasted Marshmallow globally by setting the environment
