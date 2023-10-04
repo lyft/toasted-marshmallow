@@ -1,4 +1,4 @@
-from toastedmarshmallow.compat import is_overridden
+from deepfriedmarshmallow.compat import is_overridden
 
 
 class Base(object):

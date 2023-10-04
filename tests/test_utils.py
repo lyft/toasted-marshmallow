@@ -1,19 +1,16 @@
-from toastedmarshmallow.utils import IndentedString
+from deepfriedmarshmallow.utils import IndentedString
 
 
 def test_indented_string():
     body = IndentedString()
-    subbody = IndentedString('if False:')
+    subbody = IndentedString("if False:")
 
     with subbody.indent():
         subbody += 'print("How are you?")'
 
-    body += 'def foo():'
+    body += "def foo():"
     with body.indent():
         body += 'print("Hello World!")'
         body += subbody
 
-    assert str(body) == ('def foo():\n'
-                         '    print("Hello World!")\n'
-                         '    if False:\n'
-                         '        print("How are you?")')
+    assert str(body) == 'def foo():\n    print("Hello World!")\n    if False:\n        print("How are you?")'

@@ -1,51 +1,36 @@
 import pytest
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, ValidationError
 
-import toastedmarshmallow
+import deepfriedmarshmallow
 
 
 @pytest.fixture()
 def schema():
-    class TestSchema(Schema):
-        key = fields.String(default='world')
-        value = fields.Integer(missing=42)
+    class TestSchema(deepfriedmarshmallow.JitSchema):
+        key = fields.String(dump_default="world")
+        value = fields.Integer(load_default=42)
+
     return TestSchema()
 
 
 def test_marshmallow_integration_dump(schema):
-    schema.jit = toastedmarshmallow.Jit
-    assert schema._jit_instance is not None
+    result = schema.dump({"key": "hello", "value": 32})
+    assert result == {"key": "hello", "value": 32}
 
-    result = schema.dump({'key': 'hello', 'value': 32})
-    assert not result.errors
-    assert result.data == {'key': 'hello', 'value': 32}
-
-    result = schema.dump({'value': 32})
-    assert not result.errors
-    assert result.data == {'key': 'world', 'value': 32}
-
-    assert schema._jit_instance is not None
+    result = schema.dump({"value": 32})
+    assert result == {"key": "world", "value": 32}
 
 
 def test_marshmallow_integration_load(schema):
-    schema.jit = toastedmarshmallow.Jit
-    assert schema._jit_instance is not None
+    result = schema.load({"key": "hello", "value": 32})
+    assert result == {"key": "hello", "value": 32}
 
-    result = schema.load({'key': 'hello', 'value': 32})
-    assert not result.errors
-    assert result.data == {'key': 'hello', 'value': 32}
-
-    result = schema.load([{'key': 'hello'}], many=True)
-    assert not result.errors
-    assert result.data == [{'key': 'hello', 'value': 42}]
-    assert schema._jit_instance is not None
+    result = schema.load([{"key": "hello"}], many=True)
+    assert result == [{"key": "hello", "value": 42}]
 
 
 def test_marshmallow_integration_invalid_data(schema):
-    schema.jit = toastedmarshmallow.Jit
-    assert schema._jit_instance is not None
-    result = schema.dump({'key': 'hello', 'value': 'foo'})
-    assert {'value': ['Not a valid integer.']} == result.errors
-    result = schema.load({'key': 'hello', 'value': 'foo'})
-    assert {'value': ['Not a valid integer.']} == result.errors
-    assert schema._jit_instance is not None
+    with pytest.raises(ValueError, match="invalid literal for int\(\) with base 10"):
+        schema.dump({"key": "hello", "value": "foo"})
+    with pytest.raises(ValidationError, match="Not a valid integer"):
+        schema.load({"key": "hello", "value": "foo"})

@@ -1,26 +1,21 @@
 import os
 from contextlib import contextmanager
 
-if False:  # pylint: disable=using-constant-test
-    # pylint: disable=unused-import
-    from typing import List, Union
 
+class IndentedString:
+    """Utility class for printing indented strings via a context manager."""
 
-class IndentedString(object):
-    """Utility class for printing indented strings via a context manager.
-
-    """
-    def __init__(self, content='', indent=4):
+    def __init__(self, content="", indent=4):
         # type: (Union[str, IndentedString], int) -> None
         self.result = []  # type: List[str]
         self._indent = indent
-        self.__indents = ['']
+        self.__indents = [""]
         if content:
             self.__iadd__(content)
 
     @contextmanager
     def indent(self):
-        self.__indents.append(self.__indents[-1] + (self._indent * ' '))
+        self.__indents.append(self.__indents[-1] + (self._indent * " "))
         try:
             yield
         finally:

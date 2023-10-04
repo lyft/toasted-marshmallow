@@ -1,0 +1,22 @@
+name: Build and publish
+
+on:
+  release:
+    types: [ published ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish package
+        uses: code-specialist/pypi-poetry-publish@v1
+        with:
+          PACKAGE_DIRECTORY: "./deepfriedmarshmallow/"
+          PYTHON_VERSION: "3.11"
+          ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISH_REGISTRY_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+          POETRY_VERSION: ${{ vars.POETRY_VERSION }}
+          POETRY_CORE_VERSION: ${{ vars.POETRY_CORE_VERSION }}
+          BRANCH: main

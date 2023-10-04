@@ -1,0 +1,36 @@
+name: "Push CI/CD"
+
+on: [push]
+
+jobs:
+  test:
+    name: "Tests (Python ${{ matrix.pyversion }})"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pyversion: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - name: "Checkout the code"
+        uses: actions/checkout@master
+
+      - name: "Install Python ${{ matrix.pyversion }}"
+        uses: actions/setup-python@v4
+        with:
+          python-version: "${{ matrix.pyversion }}"
+
+      - name: "Install poetry"
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
+      - name: "Install dependencies"
+        run: |
+          poetry install --all-extras
+
+      - name: "Run full test suite"
+        run: |
+          poetry run pytest tests/
+
+      - name: "Run benchmarks"
+        run: |
+          poetry run python performance/benchmark.py 

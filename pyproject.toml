@@ -1,0 +1,102 @@
+[tool.poetry]
+name = "DeepFriedMarshmallow"
+version = "1.0.0dev1"
+description = "A JIT implementation for Marshmallow to speed up dumping and loading objects"
+authors = ["Maciej Wilczynski <oss@lupin.rocks>", "Roy Williams <rwilliams@lyft.com>"]
+readme = "README.rst"
+homepage = "https://github.com/mLupine/DeepFriedMarshmallow"
+license = "Apache-2.0"
+keywords = ["serialization", "rest", "json", "api", "marshal", "marshalling", "deserialization", "validation", "schema"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy"
+]
+packages = [{ include = "deepfriedmarshmallow" }]
+exclude = ["tests/**/*", "performance/"]
+
+[tool.poetry.dependencies]
+python = ">=3.8.1,<4.0.0"
+attrs = ">=17.1.0"
+marshmallow = ">=3.13.0,<4.0.0"
+six = "^1.16.0"
+
+[tool.poetry.group.dev.dependencies]
+protobuf = "^4.24.3"
+pytest = "^7.4.2"
+pytest-cov = "^4.1.0"
+pylint = "^3.0.0"
+pytz = "^2023.3.post1"
+coverage = "^7.3.2"
+ruff = "^0.0.292"
+black = "^23.9.1"
+isort = "^5.12.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+select = [
+    "A",
+    "B",
+    "C",
+    "E",
+    "F",
+    "G",
+    "I",
+    "N",
+    "Q",
+    "S",
+    "T",
+    "W",
+    "ARG",
+    "BLE",
+    "COM",
+    "DJ",
+    "DTZ",
+    "EM",
+    "ERA",
+    "EXE",
+    "FBT",
+    "ICN",
+    "INP",
+    "ISC",
+    "NPY",
+    "PD",
+    "PGH",
+    "PIE",
+    "PT",
+    "PTH",
+    "PYI",
+    "RET",
+    "RSE",
+    "RUF",
+    "SIM",
+    "TCH",
+    "TID",
+    "TRY",
+    "UP",
+    "YTT",
+]
+extend-ignore = ["BLE001", "PLR0912", "C901", "PGH003", "ARG002"]
+line-length = 120
+target-version = "py311"
+extend-exclude = [
+    "tests/",
+    "performance/",
+]
