@@ -13,6 +13,13 @@ from .compat import is_overridden
 from .utils import IndentedString
 
 
+# TODO: make a proper comparison
+LOAD_DEFAULT_FIELD = 'missing'
+DUMP_DEFAULT_FIELD = 'default'
+if marshmallow.__version__ >= '3.14.0':
+    LOAD_DEFAULT_FIELD = 'load_default'
+    DUMP_DEFAULT_FIELD = 'dump_default'
+
 # Regular Expression for identifying a valid Python identifier name.
 _VALID_IDENTIFIER = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
 
@@ -111,11 +118,11 @@ class DictSerializer(FieldSerializer):
         # type: (str, str, str, fields.Field) -> IndentedString
         body = IndentedString()
         if self.context.is_serializing:
-            default_str = 'default'
-            default_value = field_obj.default
+            default_str = DUMP_DEFAULT_FIELD
+            default_value = getattr(field_obj, DUMP_DEFAULT_FIELD)
         else:
-            default_str = 'missing'
-            default_value = field_obj.missing
+            default_str = LOAD_DEFAULT_FIELD
+            default_value = getattr(field_obj, LOAD_DEFAULT_FIELD)
             if field_obj.required:
                 body += assignment_template.format('obj["{attr_name}"]'.format(
                     attr_name=attr_name))
