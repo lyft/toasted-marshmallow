@@ -12,6 +12,13 @@ from marshmallow.base import SchemaABC
 from .compat import is_overridden
 from .utils import IndentedString
 
+LOAD_DEFAULT_FIELD_NAME = 'missing'
+DUMP_DEFAULT_FIELD_NAME = 'default'
+if marshmallow.version >= '3.14.0':
+    LOAD_DEFAULT_FIELD_NAME = 'load_default'
+    DUMP_DEFAULT_FIELD_NAME = 'dump_default'
+
+if marshm
 
 # Regular Expression for identifying a valid Python identifier name.
 _VALID_IDENTIFIER = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
@@ -111,11 +118,11 @@ class DictSerializer(FieldSerializer):
         # type: (str, str, str, fields.Field) -> IndentedString
         body = IndentedString()
         if self.context.is_serializing:
-            default_str = 'default'
-            default_value = field_obj.default
+            default_str = DUMP_DEFAULT_FIELD_NAME
+            default_value = getattr(field_obj, DUMP_DEFAULT_FIELD_NAME)
         else:
-            default_str = 'missing'
-            default_value = field_obj.missing
+            default_str = LOAD_DEFAULT_FIELD_NAME
+            default_value = getattr(field_obj, LOAD_DEFAULT_FIELD_NAME)
             if field_obj.required:
                 body += assignment_template.format('obj["{attr_name}"]'.format(
                     attr_name=attr_name))
